@@ -2,6 +2,17 @@
 
 Choropleth helper for GeoPandas with defaults for projection, layout and legend.
 
+## Core principles
+
+- **Easy to use:** the common case works with one function call or CLI command
+- **Defaults first, flexibility when needed:** well-designed defaults that you can override with small configs; explicit beats auto
+- **Speed:** avoid unnecessary copies and Python loops; keep plotting fast for large GeoDataFrames
+- **Clean, production ready outputs:** consistent spacing, legible labels, subtle legend; high DPI and tight bounding boxes
+- **Predictable and reproducible:** deterministic classifications and colors when breaks are specified; versioned defaults
+- **Accessible and readable:** offer color-vision-safe palettes and readable tick labels
+- **Small surface area:** dataclasses capture configuration; CLI mirrors the Python API
+- **Composable design:** separate modules for projection, legend and layout so parts can be swapped later
+
 ## Install
 
 ```bash

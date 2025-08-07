@@ -2,6 +2,39 @@
 
 Shortlist of improvements and ideas to guide next iterations.
 
+## Core principles
+
+- Easy to use
+  - The common case works with a single function call or CLI command
+  - Clear names, minimal required arguments, sensible defaults
+
+- Defaults first, flexibility when needed
+  - Good-looking defaults for projection, legend, spacing and typography
+  - Overridable via small, well-scoped configs; explicit parameters always win over auto
+
+- Speed
+  - Avoid unnecessary copies and Python loops, prefer vectorized operations
+  - Keep rendering fast for large GeoDataFrames; do only the work that changes the output
+
+- Clean, production ready outputs
+  - Publication quality by default: high DPI, tight bounding boxes, no clipping
+  - Consistent spacing, legible labels, subtle legend styling
+
+- Predictable and reproducible
+  - Deterministic classifications and colors when breaks are specified
+  - Versioned defaults so outputs remain stable across upgrades
+
+- Accessible and readable
+  - Provide color-vision-safe palette options and readable tick labels
+  - Avoid tiny text and low-contrast annotations
+
+- Small surface area
+  - Dataclasses capture configuration; CLI mirrors the Python API
+  - Keep the public API compact and stable; add power through focused options
+
+- Composable design
+  - Separate modules for projection, legend and layout so advanced users can swap parts later
+
 ## Palettes
 
 - Support ColorBrewer palette names and break counts (seq/div/qual)
