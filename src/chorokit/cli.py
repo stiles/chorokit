@@ -19,7 +19,7 @@ def main() -> None:
     p.add_argument("--cmap", default="YlOrRd")
     p.add_argument("--legend-title", default=None)
     p.add_argument("--legend-kind", choices=["binned", "continuous"], default="binned")
-    p.add_argument("--legend-location", choices=["right", "bottom"], default="right")
+    p.add_argument("--legend-location", choices=["right", "bottom", "top"], default="right")
     p.add_argument("--legend-orientation", choices=["vertical", "horizontal"], default=None)
     p.add_argument(
         "--legend-breaks",
@@ -42,6 +42,11 @@ def main() -> None:
     p.add_argument("--vmax", type=float, default=None)
     p.add_argument("--no-auto-project", action="store_true", help="Do not auto-project data")
     p.add_argument("--projection", help="Target CRS (EPSG code like 5070 or proj string)", default=None)
+    p.add_argument(
+        "--figsize",
+        help="Figure size as width,height in inches (e.g., 10,10)",
+        default=None,
+    )
 
     args = p.parse_args()
 
@@ -80,11 +85,21 @@ def main() -> None:
         vmin=args.vmin,
         vmax=args.vmax,
     )
+    # figure size parsing
+    figure_size = None
+    if args.figsize:
+        try:
+            w_str, h_str = [s.strip() for s in args.figsize.split(",", 1)]
+            figure_size = (float(w_str), float(h_str))
+        except Exception:
+            figure_size = None
+
     layout = LayoutConfig(
         title=args.title,
         subtitle=args.subtitle,
         source=args.source,
         credit=args.credit,
+        figure_size=(figure_size if figure_size else (12, 8)),
     )
 
     fig, _ = plot_choropleth(

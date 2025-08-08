@@ -11,7 +11,7 @@ from matplotlib import cm
 from matplotlib.colors import BoundaryNorm, Normalize
 
 from pyproj import CRS
-from .projection import auto_project
+from .projection import auto_project, ensure_projected
 from .legend import add_binned_colorbar, add_continuous_colorbar, legend_rectangles
 from .style import Theme
 from .classify import compute_breaks, generate_interval_labels, discrete_cmap
@@ -92,7 +92,7 @@ def plot_choropleth(
     if proj_to_use is not None:
         gdf_plot = gdf.to_crs(proj_to_use)
     else:
-        gdf_plot = auto_project(gdf) if effective_auto else gdf
+        gdf_plot = ensure_projected(gdf) if effective_auto else gdf
 
     # figure and axes layout
     fig = plt.figure(figsize=layout.figure_size)
@@ -176,7 +176,13 @@ def plot_choropleth(
     if norm is not None:
         plot_kwargs["norm"] = norm
 
+    # guard against GeoPandas aspect errors by explicitly setting aspect after plot
+
     gdf_plot.plot(ax=ax, **plot_kwargs)
+    try:
+        ax.set_aspect("equal")
+    except Exception:
+        pass
 
     # legend drawing
     if legend_rect is not None:
@@ -202,10 +208,13 @@ def plot_choropleth(
             )
 
     # layout: title, subtitle, source, credit
+    # headline and subhead spacing tuned for top legend variant
+    title_y = 0.99
+    subtitle_y = 0.957
     if layout.title:
-        fig.suptitle(layout.title, x=left, y=0.99, ha="left", va="top", fontsize=18, weight="bold")
+        fig.suptitle(layout.title, x=left, y=title_y, ha="left", va="top", fontsize=18, weight="bold")
     if layout.subtitle:
-        fig.text(left, 0.955, layout.subtitle, ha="left", va="top", fontsize=12)
+        fig.text(left, subtitle_y, layout.subtitle, ha="left", va="top", fontsize=12)
     footer_y = bottom * 0.6
     if layout.source:
         fig.text(left, footer_y, layout.source, ha="left", va="bottom", fontsize=9, color="#444")

@@ -19,6 +19,7 @@ Shortlist of improvements and ideas to guide next iterations.
 - Clean, production ready outputs
   - Publication quality by default: high DPI, tight bounding boxes, no clipping
   - Consistent spacing, legible labels, subtle legend styling
+  - SVG output option
 
 - Predictable and reproducible
   - Deterministic classifications and colors when breaks are specified
@@ -52,6 +53,7 @@ Shortlist of improvements and ideas to guide next iterations.
 - Add `scheme="natural"|"equal"|"quantiles"` to CLI and Python API (done)
 - Consider additional classifiers: JenksCaspall, MaximumBreaks, StdMean
 - Add guardrails: coerce `k` to available palette break counts when `palette` is provided
+- Make Jenks (FisherJenks) the default when value distribution is skewed; fall back to quantiles otherwise
 
 ## Legend controls
 
@@ -65,6 +67,7 @@ Shortlist of improvements and ideas to guide next iterations.
 - Add more named projections in `Projection` (Alaska, Hawaii, Europe)
 - Auto-detect world vs regional extents; select projection accordingly
 - Optional insets (AK/HI) for national maps with layout helpers
+- Add US inset layout helper: AK and HI small multiples with configurable positions
 
 ## Layout
 
@@ -75,6 +78,7 @@ Shortlist of improvements and ideas to guide next iterations.
 
 - US states demo using ACS data with top legend (Reds)
 - County-level example with natural breaks and 7-bin ColorBrewer palette
+- National choropleth with AK/HI insets and binned Reds palette
 
 ## Docs
 

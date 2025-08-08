@@ -15,7 +15,7 @@ def main() -> None:
 
     legend = LegendConfig(
         kind="binned",
-        title="Percent of population",
+        title="Percent of population, by block",
         location="top",
         orientation="horizontal",
         breaks=[0, 5, 15, 30, 50, 90],
@@ -25,7 +25,7 @@ def main() -> None:
     layout = LayoutConfig(
         title="Percent non-Hispanic Asian",
         subtitle="Los Angeles County blocks, 2020",
-        source="Source: LA County SRR 2020 via ArcGIS",
+        source="Source: County of Los Angeles, Census 2020 SRR and Demographic Characteristics",
         figure_size=(10, 10),
         # choose projection via config (overrides auto)
         projection=3857,

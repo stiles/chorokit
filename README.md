@@ -94,7 +94,7 @@ chorokit data.geojson value --palette Reds:5 --scheme equal
 
 ## Features
 
-- **Projection**: auto-projects geographic CONUS to EPSG:5070; accept explicit CRS via int, EPSG string or `pyproj.CRS`
+- **Projection**: auto-projects geographic data. Local/regional extents use a suitable UTM zone; large CONUS extents use EPSG:5070. You can pass an explicit CRS via int, EPSG string or `pyproj.CRS`.
 - **Legend**: top, right or bottom; binned or continuous; auto breaks via `scheme` and `k`; custom labels and title; subtle default styling
 - **Theme**: set font family and text sizes via `LayoutConfig.theme`
 - **CLI**: flags for projection, legend options, and auto classification
