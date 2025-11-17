@@ -1,6 +1,6 @@
 # Chorokit
 
-Choropleth helper for GeoPandas with defaults for projection, layout and legend. 
+A Python helper that creates clean choropleth maps with defaults for projection, layout, legend and other key configurations.
 
 *This project is in the early stages of development. Contributions and feedback welcome.* 
 
