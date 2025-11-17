@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Literal, Union
 
 import geopandas as gpd
@@ -21,7 +21,7 @@ from .classify import compute_breaks, generate_interval_labels, discrete_cmap
 class LegendConfig:
     kind: Literal["binned", "continuous"] = "binned"
     title: Optional[str] = None
-    location: Literal["right", "bottom", "top"] = "right"
+    location: Literal["bottom", "top"] = "top"
     orientation: Literal["vertical", "horizontal"] = "vertical"
     breaks: Optional[List[float]] = None  # for binned
     labels: Optional[List[str]] = None  # for binned
@@ -43,13 +43,13 @@ class LayoutConfig:
     source: Optional[str] = None
     credit: Optional[str] = None
     figure_size: Tuple[float, float] = (12, 8)
-    # left, right, bottom, top
-    margins: Tuple[float, float, float, float] = (0.06, 0.06, 0.06, 0.06)
+    # left, right, bottom, top - professional margins like Google Trends
+    margins: Tuple[float, float, float, float] = (0.04, 0.04, 0.04, 0.04)
     # map projection controls (optional overrides)
     projection: Optional[Union[int, str, CRS]] = None
     auto_project: Optional[bool] = None
     # theme applied to matplotlib rcParams
-    theme: Theme = Theme()
+    theme: Theme = field(default_factory=Theme)
 
 
 def plot_choropleth(
@@ -102,17 +102,22 @@ def plot_choropleth(
     left, right, bottom, top = layout.margins
 
     # allocate map and legend rectangles
-    has_legend = bool(legend.breaks) or (legend.kind == "continuous" and legend.vmin is not None and legend.vmax is not None)
+    has_legend = (
+        bool(legend.breaks) or  # explicit breaks provided
+        (legend.kind == "continuous" and legend.vmin is not None and legend.vmax is not None) or  # continuous with range
+        (legend.kind == "binned" and legend.scheme is not None) or  # binned with auto-classification
+        (legend.kind == "binned" and legend.palette is not None)    # binned with palette
+    )
     if has_legend:
         # Use shorter, narrower top legend and increase offset from subtitle/headline
         if legend.location == "top":
             map_rect, legend_rect, enforced = legend_rectangles(
                 legend.location,
                 (left, right, bottom, top),
-                width_frac_top=0.3,
-                height_frac=0.02,
-                top_offset=0.03,
-                gap_frac=0.01,
+                width_frac_top=0.35,  
+                height_frac=0.025,    
+                top_offset=0.05,      # MORE space from subtitle
+                gap_frac=0.005,       # Tight to map
             )
         else:
             map_rect, legend_rect, enforced = legend_rectangles(legend.location, (left, right, bottom, top))
@@ -207,18 +212,49 @@ def plot_choropleth(
                 label=legend.title,
             )
 
-    # layout: title, subtitle, source, credit
-    # headline and subhead spacing tuned for top legend variant
-    title_y = 0.99
-    subtitle_y = 0.957
-    if layout.title:
-        fig.suptitle(layout.title, x=left, y=title_y, ha="left", va="top", fontsize=18, weight="bold")
-    if layout.subtitle:
-        fig.text(left, subtitle_y, layout.subtitle, ha="left", va="top", fontsize=12)
-    footer_y = bottom * 0.6
-    if layout.source:
-        fig.text(left, footer_y, layout.source, ha="left", va="bottom", fontsize=9, color="#444")
-    if layout.credit:
-        fig.text(1 - right, footer_y, layout.credit, ha="right", va="bottom", fontsize=9, color="#444")
+    # Professional layout with proper spacing hierarchy
+    _add_layout_text(fig, layout, left, right, bottom, top, legend.location if legend_rect else None)
 
     return fig, ax
+
+
+def _add_layout_text(
+    fig: Figure, 
+    layout: LayoutConfig, 
+    left: float, 
+    right: float, 
+    bottom: float, 
+    top: float,
+    legend_location: Optional[str] = None
+) -> None:
+    """Add title, subtitle, source with professional spacing hierarchy."""
+    
+    # Calculate spacing based on presence of elements and legend location
+    current_y = 0.97  # Tighter top margin
+    
+    # Title spacing
+    if layout.title:
+        fig.text(left, current_y, layout.title, 
+                ha="left", va="top", fontsize=16, weight="bold", color="#000")
+        current_y -= 0.035  # Tighter spacing after title
+    
+    # Subtitle spacing  
+    if layout.subtitle:
+        fig.text(left, current_y, layout.subtitle, 
+                ha="left", va="top", fontsize=11, color="#333")
+        current_y -= 0.02   # Much tighter gap after subtitle
+    
+    # Extra spacing before top legend (if present)
+    if legend_location == "top":
+        current_y -= 0.05   # MORE space above legend - push it toward map
+    
+    # Source and credit at bottom with proper spacing from map
+    footer_y = bottom + 0.005  # Very tight margin like Google Trends
+    
+    if layout.source:
+        fig.text(left, footer_y, layout.source, 
+                ha="left", va="bottom", fontsize=9, color="#666")
+    
+    if layout.credit:
+        fig.text(1 - right, footer_y, layout.credit, 
+                ha="right", va="bottom", fontsize=9, color="#666")

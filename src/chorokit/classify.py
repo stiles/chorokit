@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import List, Sequence
+from typing import List, Sequence, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Colormap, ListedColormap
 import mapclassify as mc
 from matplotlib import cm
+
+from .palettes import create_colorbrewer_cmap, get_palette_colors
 
 
 def compute_breaks(values: pd.Series, scheme: str = "quantiles", k: int = 5) -> List[float]:
@@ -53,9 +55,30 @@ def _fmt(x: float) -> str:
     return f"{x:.2g}"
 
 
-def discrete_cmap(base: str | Colormap, n: int) -> ListedColormap:
-    """Return a discretized colormap with n distinct colors."""
-    base_cmap = cm.get_cmap(base) if isinstance(base, str) else base
+def discrete_cmap(base: Union[str, Colormap], n: int) -> ListedColormap:
+    """Return a discretized colormap with n distinct colors.
+    
+    Args:
+        base: Base colormap name or Colormap object. If string, will first
+              try ColorBrewer palettes, then fall back to matplotlib colormaps.
+        n: Number of discrete colors
+        
+    Returns:
+        ListedColormap with n colors
+    """
+    # Try ColorBrewer first if base is a string
+    if isinstance(base, str):
+        # Check if it's a ColorBrewer palette
+        cb_cmap = create_colorbrewer_cmap(base, n, as_continuous=False)
+        if cb_cmap is not None:
+            return cb_cmap
+            
+        # Fall back to matplotlib colormap
+        base_cmap = cm.get_cmap(base)
+    else:
+        base_cmap = base
+        
+    # Sample colors from continuous colormap
     colors = base_cmap(np.linspace(0.1, 0.9, n))
     return ListedColormap(colors)
 

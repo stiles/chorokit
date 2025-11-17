@@ -36,17 +36,17 @@ Shortlist of improvements and ideas to guide next iterations.
 - Composable design
   - Separate modules for projection, legend and layout so advanced users can swap parts later
 
-## Palettes
+## Palettes ✅ COMPLETED
 
-- Support ColorBrewer palette names and break counts (seq/div/qual)
-  - Option A: ship a small curated JSON for common palettes (e.g., Reds, Blues, Greens, YlOrRd, Spectral, RdYlGn, RdBu)
-  - Option B: depend on an existing package that exposes ColorBrewer maps
-  - API sketch:
-    - `LegendConfig(kind="binned", scheme="quantiles", k=5, palette=("Reds", 5))`
-    - When `palette=(name, n)`, choose exact n-bin colors if available; otherwise interpolate
-  - Notes:
-    - For binned maps, use discrete colors sized to `k`
-    - For continuous maps, use the continuous version of the palette (when available)
+- ✅ Support ColorBrewer palette names and break counts (seq/div/qual)
+  - ✅ Ship complete ColorBrewer 2.0 palette data (35 palettes total)
+  - ✅ Sequential: Blues, BuGn, BuPu, GnBu, Greens, Greys, Oranges, OrRd, PuBu, PuBuGn, PuRd, Purples, Reds, YlGn, YlGnBu, YlOrBr, YlOrRd
+  - ✅ Diverging: BrBG, PiYG, PRGn, PuOr, RdBu, RdGy, RdYlBu, RdYlGn, Spectral
+  - ✅ Qualitative: Accent, Dark2, Paired, Pastel1, Pastel2, Set1, Set2, Set3
+  - ✅ API: `LegendConfig(palette=("Blues", 7))` with 3-12 color classes
+  - ✅ Proper attribution to Cynthia Brewer, Mark Harrower, Penn State
+  - ✅ CLI support: `--palette Blues:7`
+  - ✅ Real-world demo with US Census data
 
 ## Classification
 

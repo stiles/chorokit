@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chorokit"
-version = "0.0.1"
+version = "0.1.0"
 description = "Choropleth helper for GeoPandas with clean defaults for projection, layout and legend"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-authors = [{name = "M. Stiles"}]
+authors = [{name = "Matt Stiles"}]
 dependencies = [
   "geopandas>=0.14",
   "matplotlib>=3.7",

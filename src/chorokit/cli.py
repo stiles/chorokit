@@ -19,7 +19,7 @@ def main() -> None:
     p.add_argument("--cmap", default="YlOrRd")
     p.add_argument("--legend-title", default=None)
     p.add_argument("--legend-kind", choices=["binned", "continuous"], default="binned")
-    p.add_argument("--legend-location", choices=["right", "bottom", "top"], default="right")
+    p.add_argument("--legend-location", choices=["bottom", "top"], default="top")
     p.add_argument("--legend-orientation", choices=["vertical", "horizontal"], default=None)
     p.add_argument(
         "--legend-breaks",
@@ -76,7 +76,7 @@ def main() -> None:
         title=args.legend_title,
         kind=args.legend_kind,
         location=args.legend_location,
-        orientation=(args.legend_orientation or ("horizontal" if args.legend_location == "bottom" else "vertical")),
+        orientation=(args.legend_orientation or "horizontal"),  # Always horizontal for top/bottom
         breaks=breaks,
         labels=labels,
         scheme=args.scheme,

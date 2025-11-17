@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 LegendOrientation = Literal["vertical", "horizontal"]
-LegendLocation = Literal["right", "bottom", "top"]
+LegendLocation = Literal["bottom", "top"]
 
 
 @dataclass
@@ -48,7 +48,13 @@ def add_binned_colorbar(
     mappable = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     cbar = fig.colorbar(mappable, cax=cax, orientation=orientation)
     if labels is not None:
-        cbar.set_ticks(breaks)
+        # For binned legends, position labels at the center of each color segment
+        # Calculate midpoints between breaks for label positioning
+        label_positions = []
+        for i in range(len(breaks) - 1):
+            midpoint = (breaks[i] + breaks[i + 1]) / 2
+            label_positions.append(midpoint)
+        cbar.set_ticks(label_positions)
         cbar.set_ticklabels(labels)
     if label:
         if orientation == "horizontal":
@@ -102,31 +108,35 @@ def legend_rectangles(
 ) -> tuple:
     """Return (map_rect, legend_rect, enforced_orientation) for a location.
 
-    Location can be right, bottom or top.
+    Location can be bottom or top.
     """
     left, right, bottom, top = margins
-    if location == "right":
-        legend_w, gap = 0.03, 0.02
-        map_rect = [left, bottom, 1 - left - right - legend_w - gap, 1 - bottom - top]
-        legend_rect = [1 - right - legend_w, bottom + 0.15, legend_w, 1 - bottom - top - 0.3]
-        return map_rect, legend_rect, "vertical"
     if location == "bottom":
         legend_h, gap = 0.04, 0.02
         map_rect = [left, bottom + legend_h + gap, 1 - left - right, 1 - (bottom + legend_h + gap) - top]
         legend_rect = [left + 0.2, bottom, 1 - left - right - 0.4, legend_h]
         return map_rect, legend_rect, "horizontal"
     if location == "top":
-        # more space under subtitle; allow narrow, shallow legend
-        legend_h = height_frac if height_frac is not None else 0.03
-        gap = gap_frac if gap_frac is not None else 0.05
+        # Professional spacing for top legend - matches new layout system
+        legend_h = height_frac if height_frac is not None else 0.025  # Slightly smaller
+        gap = gap_frac if gap_frac is not None else 0.015  # Tighter spacing to map
         usable_w = 1 - left - right
-        max_frac = width_frac_top if width_frac_top is not None else 0.3
+        max_frac = width_frac_top if width_frac_top is not None else 0.35  # Slightly wider
         legend_w = min(max_frac, usable_w)
         legend_x = left + (usable_w - legend_w) / 2
-        # reserve space: legend height + gap + extra top offset for subtitle
-        reserved = legend_h + gap + top_offset
+        
+        # Account for dynamic title/subtitle spacing 
+        title_subtitle_space = 0.08   
+        extra_gap = top_offset if top_offset > 0 else 0.05   # MORE space below subtitle
+        
+        # Total reserved space from top
+        reserved = title_subtitle_space + extra_gap + legend_h + gap
+        
+        # Position legend below title/subtitle with proper gap
+        legend_y = 1 - title_subtitle_space - extra_gap - legend_h
+        
         map_rect = [left, bottom, 1 - left - right, 1 - bottom - top - reserved]
-        legend_rect = [legend_x, 1 - top - legend_h - top_offset, legend_w, legend_h]
+        legend_rect = [legend_x, legend_y, legend_w, legend_h]
         return map_rect, legend_rect, "horizontal"
     # default fallthrough
     map_rect = [left, bottom, 1 - left - right, 1 - bottom - top]
