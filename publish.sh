@@ -133,46 +133,83 @@ select choice in "Publish to TestPyPI" "Publish to PyPI (Official)" "Cancel"; do
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
                     if [ "$HAS_GH" = "false" ]; then
                         echo "Warning: GitHub CLI ('gh') not found. Cannot create release automatically."
-                        echo "Please create the release manually: https://github.com/mstiles/chorokit/releases/new"
+                        echo "Please create the release manually at: https://github.com/$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\/[^/]*\)\.git.*/\1/')/releases/new"
+                        echo "Tag: v$VERSION"
                         exit 0
                     fi
 
                     echo "Creating GitHub release..."
                     TAG="v$VERSION"
                     
-                    # Create release notes
-                    NOTES="# Chorokit v$VERSION
+                    # Check if tag already exists
+                    if git tag -l | grep -q "^$TAG$"; then
+                        echo "Warning: Tag $TAG already exists."
+                        read -p "Do you want to delete and recreate it? (y/n) " -n 1 -r
+                        echo
+                        if [[ $REPLY =~ ^[Yy]$ ]]; then
+                            git tag -d "$TAG" 2>/dev/null || true
+                            git push origin --delete "$TAG" 2>/dev/null || true
+                        else
+                            echo "Skipping GitHub release creation."
+                            exit 0
+                        fi
+                    fi
+                    
+                    # Extract release notes from CHANGELOG.md if it exists
+                    if [ -f "CHANGELOG.md" ]; then
+                        echo "Extracting release notes from CHANGELOG.md..."
+                        # Extract the section for this version from CHANGELOG.md
+                        NOTES=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md | sed '/^$/d' | head -50)
+                        
+                        if [ -z "$NOTES" ]; then
+                            echo "Warning: Could not find version $VERSION in CHANGELOG.md, using default notes."
+                            NOTES="Release v$VERSION
 
-## 🎨 ColorBrewer Integration
-- Complete ColorBrewer 2.0 palette support (35 palettes)
-- Sequential, diverging, and qualitative color schemes
-- Discrete color classes (3-12 colors per palette)
-- Proper attribution to Cynthia Brewer and Penn State
+See the [full changelog](CHANGELOG.md) for details."
+                        else
+                            NOTES="# Chorokit v$VERSION
 
-## 🎯 Professional Layout System  
-- Publication-ready spacing and typography
-- Top and bottom legend placement (no more awkward right legends)
-- Smart auto-projection for US data
-- Clean margins and consistent hierarchy
+$NOTES
 
-## 🚀 Easy to Use
-- Single function API: \`plot_choropleth()\`
-- ColorBrewer palettes: \`palette=('Blues', 7)\`
-- Auto-classification: \`scheme='natural'\`
-- CLI support: \`chorokit data.geojson column --palette Blues:7\`
+## Installation
+\`\`\`bash
+pip install chorokit
+\`\`\`
 
-## 📦 Installation
+See the [full changelog](CHANGELOG.md) for complete details."
+                        fi
+                    else
+                        echo "Warning: CHANGELOG.md not found, using default release notes."
+                        NOTES="# Chorokit v$VERSION
+
+## Installation
 \`\`\`bash
 pip install chorokit
 \`\`\`"
+                    fi
                     
-                    echo "Tagging release with $TAG..."
-                    git tag "$TAG"
-                    git push origin "$TAG"
+                    echo "Creating git tag $TAG..."
+                    if ! git tag -a "$TAG" -m "Release v$VERSION"; then
+                        echo "Error: Failed to create git tag."
+                        exit 1
+                    fi
+                    
+                    echo "Pushing tag to origin..."
+                    if ! git push origin "$TAG"; then
+                        echo "Error: Failed to push tag to origin."
+                        git tag -d "$TAG"  # Clean up local tag
+                        exit 1
+                    fi
 
-                    echo "Creating release on GitHub and uploading assets..."
-                    gh release create "$TAG" dist/* --title "Chorokit $TAG" --notes "$NOTES"
-                    echo "✅ GitHub release created successfully."
+                    echo "Creating GitHub release and uploading distribution files..."
+                    if gh release create "$TAG" dist/* --title "Chorokit $TAG" --notes "$NOTES"; then
+                        echo "✅ GitHub release created successfully!"
+                        echo "View at: https://github.com/$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\/[^/]*\)\.git.*/\1/')/releases/tag/$TAG"
+                    else
+                        echo "Error: Failed to create GitHub release."
+                        echo "Tag $TAG was created and pushed. You can create the release manually."
+                        exit 1
+                    fi
                 fi
             else
                 echo "Publishing to official PyPI cancelled."
