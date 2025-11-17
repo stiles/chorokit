@@ -2,7 +2,7 @@
 
 Choropleth helper for GeoPandas with defaults for projection, layout and legend. 
 
-*This project is in the early stages development. Contributions and feedback welcome.* 
+*This project is in the early stages of development. Contributions and feedback welcome.* 
 
 ## Core principles
 
