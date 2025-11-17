@@ -36,59 +36,104 @@ Shortlist of improvements and ideas to guide next iterations.
 - Composable design
   - Separate modules for projection, legend and layout so advanced users can swap parts later
 
-## Palettes ✅ COMPLETED
+## v0.1.0 ✅ SHIPPED (2025-11-16)
 
-- ✅ Support ColorBrewer palette names and break counts (seq/div/qual)
-  - ✅ Ship complete ColorBrewer 2.0 palette data (35 palettes total)
-  - ✅ Sequential: Blues, BuGn, BuPu, GnBu, Greens, Greys, Oranges, OrRd, PuBu, PuBuGn, PuRd, Purples, Reds, YlGn, YlGnBu, YlOrBr, YlOrRd
-  - ✅ Diverging: BrBG, PiYG, PRGn, PuOr, RdBu, RdGy, RdYlBu, RdYlGn, Spectral
-  - ✅ Qualitative: Accent, Dark2, Paired, Pastel1, Pastel2, Set1, Set2, Set3
-  - ✅ API: `LegendConfig(palette=("Blues", 7))` with 3-12 color classes
-  - ✅ Proper attribution to Cynthia Brewer, Mark Harrower, Penn State
-  - ✅ CLI support: `--palette Blues:7`
-  - ✅ Real-world demo with US Census data
+### Palettes ✅ COMPLETED
+- ✅ Complete ColorBrewer 2.0 palette integration (35 palettes)
+- ✅ Sequential, diverging, and qualitative color schemes
+- ✅ API: `LegendConfig(palette=("Blues", 7))` with 3-12 color classes
+- ✅ CLI support: `--palette Blues:7`
+- ✅ Proper attribution to Cynthia Brewer, Mark Harrower, Penn State
 
-## Classification
+### Layout System ✅ COMPLETED  
+- ✅ Professional spacing hierarchy (title → subtitle → legend → map → source)
+- ✅ Top and bottom legend placement (eliminated right legends)
+- ✅ Publication-ready typography and margins
+- ✅ Auto-projection for US geographic data
 
-- Add `scheme="natural"|"equal"|"quantiles"` to CLI and Python API (done)
-- Consider additional classifiers: JenksCaspall, MaximumBreaks, StdMean
-- Add guardrails: coerce `k` to available palette break counts when `palette` is provided
-- Make Jenks (FisherJenks) the default when value distribution is skewed; fall back to quantiles otherwise
+### Core API ✅ COMPLETED
+- ✅ Single function API: `plot_choropleth()`
+- ✅ Auto-classification: natural breaks, quantiles, equal intervals
+- ✅ CLI interface mirroring Python API
+- ✅ Real-world examples and documentation
 
-## Legend controls
+## v0.2.0 - Aesthetic Refinements (Next Release)
 
-- Expose fine-grained spacing controls in config:
-  - `legend_gap_top`, `legend_height_frac`, `legend_width_frac_top`, `legend_top_offset`
-- Option for small ticks and no outline (ultra-subtle)
-- Support unit annotations on the right of the legend ramp
+### Legend improvements
+- **Fix legend dimensions**: Default colorbar is too tall and wide - make more subtle
+- **Improve legend positioning**: Better spacing and proportions for professional look
+- **Legend styling options**: Ultra-subtle borders, custom spacing controls
 
-## Projection
+### Map alignment  
+- **Fix narrow map alignment**: Vertical maps (like LA city) should center or left-align, not right-align
+- **Smart map positioning**: Auto-detect map aspect ratio and adjust positioning
+- **Consistent centering**: Ensure maps are properly centered within their allocated space
 
-- Add more named projections in `Projection` (Alaska, Hawaii, Europe)
-- Auto-detect world vs regional extents; select projection accordingly
-- Optional insets (AK/HI) for national maps with layout helpers
-- Add US inset layout helper: AK and HI small multiples with configurable positions
+### Output formats
+- **SVG output support**: `fig.savefig("map.svg")` for scalable graphics
+- **PDF output**: High-quality vector output for publications
+- **Format optimization**: Ensure clean output across all supported formats
 
-## Layout
+## v0.3.0 - Documentation & Examples
 
-- Built-in "headline layout" presets: `layout_preset="news"|"technical"` that tune margins, font sizes, legend placement
-- Smart margins that adapt to presence/absence of subtitle and credit
+### ReadTheDocs site
+- **Comprehensive documentation**: Gallery of examples with real-world data
+- **Python API examples**: Step-by-step tutorials for common use cases
+- **CLI examples**: Command-line workflows with sample data
+- **ColorBrewer guide**: Visual palette selector and usage recommendations
+- **Best practices**: Cartographic guidelines and accessibility tips
 
-## Examples
+### Example gallery
+- **US demographic mapping**: State and county-level examples
+- **International examples**: World maps, European regions, etc.
+- **Different data types**: Population, economic, environmental data
+- **Before/after comparisons**: Chorokit vs matplotlib output quality
 
-- US states demo using ACS data with top legend (Reds)
-- County-level example with natural breaks and 7-bin ColorBrewer palette
-- National choropleth with AK/HI insets and binned Reds palette
+## v0.4.0 - Advanced Features
 
-## Docs
+### Enhanced classification
+- **Additional classifiers**: JenksCaspall, MaximumBreaks, StdMean
+- **Smart defaults**: Auto-select Jenks for skewed data, quantiles otherwise
+- **Palette guardrails**: Coerce `k` to available palette break counts
 
-- Expand README with before/after visuals, CLI walkthrough
-- Add a gallery of outputs with code links
+### Projection enhancements  
+- **More named projections**: Alaska, Hawaii, Europe, world regions
+- **Auto-detection**: World vs regional extents with appropriate projection selection
+- **US inset support**: Alaska/Hawaii small multiples for national maps
 
-## Internal
+### Advanced legend controls
+- **Fine-grained spacing**: Expose `legend_gap_top`, `legend_height_frac`, etc.
+- **Ultra-subtle styling**: Minimal ticks, no outlines, custom borders
+- **Unit annotations**: Support for units on legend ramps
 
-- Add tests for `compute_breaks`, discrete colormap sizing, and legend rect math
-- Type annotations and docstrings for public functions
-- Consider a `FigureBuilder` internal object to centralize layout math
+## v0.5.0 - Polish & Performance
+
+### Layout presets
+- **Built-in presets**: `layout_preset="news"|"technical"|"academic"` 
+- **Smart margins**: Adaptive spacing based on content presence
+- **Theme system**: Consistent typography and spacing across use cases
+
+### Performance and quality
+- **Optimization**: Faster rendering for large datasets
+- **Memory efficiency**: Reduce memory usage for complex geometries  
+- **Error handling**: Better error messages and validation
+
+### Testing and reliability
+- **Comprehensive tests**: Unit tests for `compute_breaks`, legend math, projections
+- **Integration tests**: End-to-end testing with real data
+- **Type safety**: Complete type annotations and docstrings
+- **CI/CD**: Automated testing and release pipeline
+
+## Future considerations
+
+### Advanced cartography
+- **Multi-layer support**: Overlay multiple datasets
+- **Annotation system**: Labels, callouts, north arrows
+- **Interactive output**: Integration with web mapping libraries
+
+### Data integration  
+- **Built-in data sources**: Census API, World Bank, etc.
+- **Data validation**: Automatic data quality checks
+- **Format support**: Shapefile, KML, other geographic formats
 
 

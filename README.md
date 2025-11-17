@@ -149,10 +149,10 @@ fig, ax = plot_choropleth(gdf, value="pc_nh_asn", cmap="Reds", legend=legend, la
 ## Features
 
 - **Projection**: auto-projects geographic data. Local/regional extents use a suitable UTM zone; large CONUS extents use EPSG:5070. You can pass an explicit CRS via int, EPSG string or `pyproj.CRS`.
-- **Legend**: top or bottom placement; binned or continuous; auto breaks via `scheme` and `k`; custom labels and title; professional styling
+- **Legend**: top or bottom placement; binned or continuous; auto breaks via `scheme` and `k`; custom labels and title and professional styling
 - **ColorBrewer palettes**: access to ColorBrewer 2.0 sequential, diverging and qualitative color schemes with discrete class counts
 - **Theme**: set font family and text sizes via `LayoutConfig.theme`
-- **CLI**: flags for projection, legend options, and auto classification
+- **CLI**: flags for projection, legend options and auto classification
 
 ## ColorBrewer attribution
 
