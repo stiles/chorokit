@@ -2,7 +2,7 @@ from pathlib import Path
 
 import geopandas as gpd
 
-from chorokit import plot_choropleth, LegendConfig, LayoutConfig, Projection
+from chorokit import plot_choropleth, LegendConfig, LayoutConfig
 
 
 HERE = Path(__file__).parent
@@ -17,7 +17,6 @@ def main() -> None:
         kind="binned",
         title="Percent of population, by block",
         location="top",
-        orientation="horizontal",
         breaks=[0, 5, 15, 30, 50, 90],
         labels=["0", "5", "15", "30", "50", "90"],
     )
@@ -26,8 +25,7 @@ def main() -> None:
         title="Percent non-Hispanic Asian",
         subtitle="Los Angeles County blocks, 2020",
         source="Source: County of Los Angeles, Census 2020 SRR and Demographic Characteristics",
-        figure_size=(10, 10),
-        # choose projection via config (overrides auto)
+        width=10.0,
         projection=3857,
     )
 
@@ -40,10 +38,8 @@ def main() -> None:
         auto_project_data=True,
     )
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT, dpi=300, bbox_inches="tight")
+    fig.savefig(OUT, dpi=300)
 
 
 if __name__ == "__main__":
     main()
-
-

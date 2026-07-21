@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chorokit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Choropleth helper for GeoPandas with clean defaults for projection, layout and legend"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -18,9 +18,22 @@ dependencies = [
   "shapely>=2.0"
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-mpl>=0.17"
+]
+
 [project.urls]
 Homepage = "https://github.com/mstiles/chorokit"
 
 [project.scripts]
 chorokit = "chorokit.cli:main"
 ckit = "chorokit.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--mpl --mpl-baseline-path=tests/baseline"
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/chorokit/fonts" = "chorokit/fonts"

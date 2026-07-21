@@ -1,85 +1,216 @@
 from __future__ import annotations
 
-from typing import List, Sequence, Optional, Tuple, Union
+import math
+from typing import List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Colormap, ListedColormap
 import mapclassify as mc
-from matplotlib import cm
+import matplotlib
 
-from .palettes import create_colorbrewer_cmap, get_palette_colors
+from .palettes import create_colorbrewer_cmap
+
+# Snap Jenks/quantile edges to mantissa * 10^n so legends read cleanly
+# (37,412 → 40,000; 13,542 → 15,000).
+NICE_MANTISSAS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5]
 
 
-def compute_breaks(values: pd.Series, scheme: str = "quantiles", k: int = 5) -> List[float]:
+def nice_round(value: float) -> float:
+    """Snap a positive value to the nearest round number, compared in log space."""
+    if value <= 0:
+        return 0.0
+    exp = math.floor(math.log10(value))
+    candidates = [m * 10**e for e in (exp, exp + 1) for m in NICE_MANTISSAS]
+    return min(candidates, key=lambda c: abs(math.log10(c / value)))
+
+
+def compute_breaks(
+    values: pd.Series,
+    scheme: str = "quantiles",
+    k: int = 5,
+    *,
+    log: bool = False,
+    round_breaks: bool = False,
+) -> List[float]:
     """Compute class breaks using mapclassify.
 
-    Returns a list of boundaries of length k+1.
+    Returns a list of boundaries of length up to k+1. ``k`` is clamped when
+    there are fewer unique values than classes. Duplicate edges (common with
+    quantiles on skewed data) are removed so every returned interval is nonempty.
+
+    When ``log`` is True, classification runs on log10 of positive values and
+    edges are transformed back — useful for head counts that span orders of
+    magnitude. When ``round_breaks`` is True, interior edges are snapped to
+    round numbers via :func:`nice_round` (min/max are preserved).
     """
     s = values.dropna().astype(float)
     if s.empty:
         return []
+
+    if log:
+        s = s[s > 0]
+        if s.empty:
+            return []
+        s_work = np.log10(s)
+    else:
+        s_work = s
+
+    n_unique = int(pd.Series(s_work).nunique())
+    if n_unique < 2:
+        v = float(s.min()) if not log else float(s.iloc[0])
+        return [v, v]
+
+    k = max(1, min(int(k), n_unique))
+
     scheme = scheme.lower()
     if scheme in {"quantile", "quantiles", "q"}:
-        classifier = mc.Quantiles(s, k=k)
+        classifier = mc.Quantiles(s_work, k=k)
     elif scheme in {"equal", "equalinterval", "e"}:
-        classifier = mc.EqualInterval(s, k=k)
+        classifier = mc.EqualInterval(s_work, k=k)
     elif scheme in {"natural", "fisherjenks", "jenks", "fj"}:
-        classifier = mc.FisherJenks(s, k=k)
+        classifier = mc.FisherJenks(s_work, k=k)
     else:
         raise ValueError(f"Unsupported scheme: {scheme}")
+
     lower = float(s.min())
     upper = float(s.max())
-    # mapclassify returns k-1 upper bounds; build full boundary list
-    bounds = [lower] + [float(b) for b in classifier.bins]
-    # ensure final upper bound includes max
+    raw_bins = [float(b) for b in classifier.bins]
+    if log:
+        raw_bins = [10**b for b in raw_bins]
+
+    bounds = [lower] + raw_bins
     if bounds[-1] < upper:
         bounds[-1] = upper
-    return bounds
+    elif bounds[-1] > upper:
+        bounds[-1] = upper
+
+    deduped: List[float] = [bounds[0]]
+    for b in bounds[1:]:
+        if b > deduped[-1]:
+            deduped.append(b)
+    if len(deduped) < 2:
+        return [lower, upper]
+
+    if round_breaks and len(deduped) > 2:
+        rounded: List[float] = [deduped[0]]
+        for b in deduped[1:-1]:
+            r = nice_round(b)
+            if r > rounded[-1]:
+                rounded.append(r)
+        if deduped[-1] > rounded[-1]:
+            rounded.append(deduped[-1])
+        elif len(rounded) == 1:
+            rounded.append(deduped[-1])
+        deduped = rounded
+
+    return deduped
 
 
-def generate_interval_labels(breaks: Sequence[float]) -> List[str]:
-    """Generate simple interval labels like 'a–b'."""
-    labels: List[str] = []
-    for i in range(len(breaks) - 1):
-        a = breaks[i]
-        b = breaks[i + 1]
-        labels.append(f"{_fmt(a)}–{_fmt(b)}")
-    return labels
+def format_value(x: float, *, compact: bool = False, percent: bool = False) -> str:
+    """Format a single break value for legend ticks."""
+    if percent:
+        # keep integer percents clean; otherwise drop trailing zeros
+        if abs(x - round(x)) < 1e-9:
+            return f"{int(round(x))}%"
+        return f"{x:g}%"
+    if compact:
+        ax = abs(x)
+        if ax >= 1e6:
+            return f"{x / 1e6:g}M"
+        if ax >= 1e3:
+            return f"{x / 1e3:g}k"
+        if abs(x - round(x)) < 1e-9:
+            return f"{int(round(x))}"
+        return f"{x:g}"
+    precision = 0 if abs(x - round(x)) < 1e-9 else _decimal_places(x)
+    return _fmt(x, precision)
 
 
-def _fmt(x: float) -> str:
-    # format integers without decimals, otherwise compact
-    if abs(x - int(x)) < 1e-9:
-        return f"{int(x)}"
-    return f"{x:.2g}"
+def generate_interval_labels(
+    breaks: Sequence[float],
+    *,
+    compact: bool = False,
+    percent: bool = False,
+) -> List[str]:
+    """Generate interval labels like '1.5k–20k' or '20%–40%'."""
+    if len(breaks) < 2:
+        return []
+    if compact or percent:
+        return [
+            f"{format_value(breaks[i], compact=compact, percent=percent)}"
+            f"–{format_value(breaks[i + 1], compact=compact, percent=percent)}"
+            for i in range(len(breaks) - 1)
+        ]
+    precision = _shared_precision(breaks)
+    return [f"{_fmt(breaks[i], precision)}–{_fmt(breaks[i + 1], precision)}" for i in range(len(breaks) - 1)]
+
+
+def generate_boundary_labels(
+    breaks: Sequence[float],
+    *,
+    compact: bool = False,
+    percent: bool = False,
+    interior_only: bool = True,
+) -> List[str]:
+    """Generate labels placed on class boundaries (ag-census style).
+
+    With ``interior_only=True`` (default), only the edges between classes are
+    labeled — not the data min/max — matching a ramp that shows break ticks
+    between color blocks.
+    """
+    if len(breaks) < 2:
+        return []
+    targets: Sequence[float] = breaks[1:-1] if interior_only and len(breaks) > 2 else breaks
+    return [format_value(b, compact=compact, percent=percent) for b in targets]
+
+
+def _decimal_places(x: float) -> int:
+    if abs(x - round(x)) < 1e-9:
+        return 0
+    s = f"{x:.10f}".rstrip("0")
+    if "." not in s:
+        return 0
+    return len(s.split(".", 1)[1])
+
+
+def _shared_precision(breaks: Sequence[float]) -> int:
+    """Pick a decimal precision that distinguishes consecutive breaks."""
+    if all(abs(x - round(x)) < 1e-9 for x in breaks):
+        return 0
+    precision = max((_decimal_places(x) for x in breaks), default=0)
+    precision = min(precision, 6)
+    for decimals in range(precision, 7):
+        rounded = [round(x, decimals) for x in breaks]
+        if all(a < b for a, b in zip(rounded, rounded[1:])):
+            return decimals
+    return 6
+
+
+def _fmt(x: float, precision: int) -> str:
+    if precision == 0:
+        return f"{int(round(x)):,}"
+    return f"{x:,.{precision}f}"
 
 
 def discrete_cmap(base: Union[str, Colormap], n: int) -> ListedColormap:
     """Return a discretized colormap with n distinct colors.
-    
+
     Args:
         base: Base colormap name or Colormap object. If string, will first
               try ColorBrewer palettes, then fall back to matplotlib colormaps.
         n: Number of discrete colors
-        
+
     Returns:
         ListedColormap with n colors
     """
-    # Try ColorBrewer first if base is a string
     if isinstance(base, str):
-        # Check if it's a ColorBrewer palette
         cb_cmap = create_colorbrewer_cmap(base, n, as_continuous=False)
         if cb_cmap is not None:
             return cb_cmap
-            
-        # Fall back to matplotlib colormap
-        base_cmap = cm.get_cmap(base)
+        base_cmap = matplotlib.colormaps[base]
     else:
         base_cmap = base
-        
-    # Sample colors from continuous colormap
+
     colors = base_cmap(np.linspace(0.1, 0.9, n))
     return ListedColormap(colors)
-
-

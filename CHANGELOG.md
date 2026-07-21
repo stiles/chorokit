@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned for v0.2.0 - Aesthetic Refinements
-- Fix legend dimensions (currently too tall/wide)
-- Improve map alignment for narrow vertical maps  
-- Add SVG output support
-- Enhanced legend styling options
-
 ### Planned for v0.3.0 - Documentation
 - ReadTheDocs site with comprehensive examples
 - Gallery of real-world use cases
@@ -21,57 +15,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.0] - 2025-11-19 **Initial Release**
+## [0.2.0] - 2026-07-20
 
 ### Added
-- **Complete ColorBrewer 2.0 integration** with 35 professional palettes
-  - Sequential palettes (Blues, Reds, Greens, YlOrRd, etc.) 
-  - Diverging palettes (RdBu, Spectral, PiYG, etc.)
-  - Qualitative palettes (Set1, Set2, Dark2, etc.)
-  - Support for 3-12 discrete color classes per palette
-  - Proper attribution to Cynthia Brewer, Mark Harrower, and Penn State
+- Deterministic inches-based layout engine (`layout.py`): figure height is derived
+  from the projected map's aspect ratio plus fixed-size text and legend bands
+- `LayoutConfig.width` replaces `figure_size`; optional `max_height` caps tall maps
+- Visual regression suite (`pytest-mpl`) covering wide, tall and square geographies
+  across legend and text variants, with committed baselines
+- `tools/gallery.py` contact-sheet renderer for eyeballing the full case matrix
+- Unit tests for classification, labeling, projection and layout math
+- GitHub Actions workflow running the test suite on Python 3.10 and 3.12
+- `Overlay` for drawing boundary layers (e.g. state lines) on top of the choropleth
+- Legend options: `align` (center/left), `log` classification, `round_breaks`,
+  `label_style` (interval/boundary), `compact` and `percent` label formats,
+  and an automatic "No data" swatch when the value column has missing values
+- USDA Census of Agriculture county-map examples (`examples/ag_census_maps.py`)
+- Bundled Barlow typeface as the default theme font (falls back to DejaVu Sans)
 
-- **Professional layout system** with publication-ready spacing
-  - Smart spacing hierarchy for title, subtitle, legend, map, and source
-  - Top and bottom legend placement (removed awkward right legends)
-  - Consistent margins and typography matching modern data visualization standards
+### Changed
+- Top and bottom legends are always horizontal; `orientation` on `LegendConfig`
+  is ignored (kept for compatibility)
+- CLI `--width` replaces `--figsize`; saved images use the exact canvas size
+  (no `bbox_inches="tight"`)
+- Interval labels use thousands separators and shared decimal precision
+- Default theme font is Barlow (bundled); falls back to DejaVu Sans
 
-- **Auto-projection system** for US geographic data
-  - Automatic UTM zone selection for local/regional data
-  - EPSG:5070 (Albers Equal Area) for CONUS-wide data
-  - Manual projection override support
+### Fixed
+- Map alignment for tall/narrow geographies: map is centered, figure height
+  follows the data aspect instead of a fixed canvas
+- `compute_breaks` dedupes colliding quantile edges and clamps `k` to the number
+  of unique values
+- Replaced deprecated `matplotlib.cm.get_cmap` with `matplotlib.colormaps`
 
-- **Simple but powerful API**
-  - Single function: `plot_choropleth(gdf, value="column")`
-  - ColorBrewer palettes: `LegendConfig(palette=("Blues", 7))`
-  - Auto-classification: `scheme="natural"` (Jenks), `"quantiles"`, `"equal"`
-  - Custom breaks and labels support
+### Removed
+- Fraction-based `legend_rectangles` helper (layout now owns rectangle math)
 
-- **Command-line interface**
-  - `chorokit data.geojson column --palette Blues:7 --scheme natural`
-  - All Python API features available via CLI
-  - Professional output with single command
+---
 
-### Technical
-- Built on GeoPandas, matplotlib and mapclassify
-- Type hints throughout codebase
-- Modular design with separate projection, legend and classification modules
-- Comprehensive ColorBrewer palette data embedded
+## [0.1.0] - 2025-11-19
 
-### Examples and documentation
-- US Census state population demo with real data
-- LA County demographic mapping example  
-- CLI usage examples with real datasets
-- ColorBrewer palette showcase
-- Professional README with visual examples
-- Automated publish script for future releases
-
-### What makes this special
-- **Publication-ready output** that rivals commercial tools
-- **ColorBrewer integration** with proper academic attribution
-- **Professional spacing** that matches Google Trends quality
-- **Simple API** that "just works" for common use cases
-- **No more awkward right legends** - only top/bottom placement
+### Added
+- ColorBrewer 2.0 integration with 35 palettes (sequential, diverging, qualitative)
+- Layout system with title, subtitle, legend, map and source hierarchy
+- Auto-projection: UTM for local/regional data, EPSG:5070 for CONUS
+- `plot_choropleth()` API with `LegendConfig` and `LayoutConfig`
+- CLI (`chorokit` / `ckit`) mirroring the Python API
+- LA County demographics and US population examples
 
 ## [0.0.1] - 2024-11-17
 

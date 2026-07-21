@@ -20,7 +20,7 @@ def main() -> None:
     p.add_argument("--legend-title", default=None)
     p.add_argument("--legend-kind", choices=["binned", "continuous"], default="binned")
     p.add_argument("--legend-location", choices=["bottom", "top"], default="top")
-    p.add_argument("--legend-orientation", choices=["vertical", "horizontal"], default=None)
+    p.add_argument("--legend-align", choices=["center", "left"], default="center")
     p.add_argument(
         "--legend-breaks",
         help="Comma-separated breaks for binned legend (e.g., 0,10,20,30)",
@@ -33,6 +33,11 @@ def main() -> None:
     )
     p.add_argument("--scheme", help="Auto classification scheme: quantiles, equal, natural", default=None)
     p.add_argument("-k", type=int, default=5, help="Number of classes when using --scheme")
+    p.add_argument("--log", action="store_true", help="Classify on log10 of positive values")
+    p.add_argument("--round-breaks", action="store_true", help="Snap interior breaks to round numbers")
+    p.add_argument("--label-style", choices=["interval", "boundary"], default="interval")
+    p.add_argument("--compact", action="store_true", help="Format labels with k/M suffixes")
+    p.add_argument("--percent", action="store_true", help="Format labels as percents")
     p.add_argument(
         "--palette",
         help="Palette name and count like Reds:5 or Spectral:7 (overrides cmap, sizes discrete colors)",
@@ -43,16 +48,16 @@ def main() -> None:
     p.add_argument("--no-auto-project", action="store_true", help="Do not auto-project data")
     p.add_argument("--projection", help="Target CRS (EPSG code like 5070 or proj string)", default=None)
     p.add_argument(
-        "--figsize",
-        help="Figure size as width,height in inches (e.g., 10,10)",
-        default=None,
+        "--width",
+        type=float,
+        default=10.0,
+        help="Figure width in inches (height is derived from the map aspect)",
     )
 
     args = p.parse_args()
 
     gdf = gpd.read_file(args.geo)
 
-    # parse legend breaks/labels
     breaks = None
     labels = None
     if args.legend_breaks:
@@ -60,7 +65,6 @@ def main() -> None:
     if args.legend_labels:
         labels = [x.strip() for x in args.legend_labels.split(",") if x.strip()]
 
-    # palette parsing
     palette = None
     if args.palette:
         if ":" in args.palette:
@@ -68,7 +72,7 @@ def main() -> None:
             try:
                 palette = (name, int(n))
             except ValueError:
-                palette = (name, None)  # ignore invalid count
+                palette = (name, None)
         else:
             palette = (args.palette, None)
 
@@ -76,30 +80,26 @@ def main() -> None:
         title=args.legend_title,
         kind=args.legend_kind,
         location=args.legend_location,
-        orientation=(args.legend_orientation or "horizontal"),  # Always horizontal for top/bottom
+        align=args.legend_align,
         breaks=breaks,
         labels=labels,
         scheme=args.scheme,
         k=args.k,
+        log=args.log,
+        round_breaks=args.round_breaks,
+        label_style=args.label_style,
+        compact=args.compact,
+        percent=args.percent,
         palette=palette,  # type: ignore[arg-type]
         vmin=args.vmin,
         vmax=args.vmax,
     )
-    # figure size parsing
-    figure_size = None
-    if args.figsize:
-        try:
-            w_str, h_str = [s.strip() for s in args.figsize.split(",", 1)]
-            figure_size = (float(w_str), float(h_str))
-        except Exception:
-            figure_size = None
-
     layout = LayoutConfig(
         title=args.title,
         subtitle=args.subtitle,
         source=args.source,
         credit=args.credit,
-        figure_size=(figure_size if figure_size else (12, 8)),
+        width=args.width,
     )
 
     fig, _ = plot_choropleth(
@@ -113,7 +113,7 @@ def main() -> None:
     )
 
     if args.output:
-        fig.savefig(args.output, dpi=300, bbox_inches="tight")
+        fig.savefig(args.output, dpi=300)
     else:
         import matplotlib.pyplot as plt
 
