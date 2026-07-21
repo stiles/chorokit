@@ -1,6 +1,7 @@
 # Planning
 
-Shortlist of improvements and ideas to guide next iterations.
+Improvements and ideas for next iterations. Real maps and examples come first:
+features are added when an example needs them, not as a standalone wishlist.
 
 ## Core principles
 
@@ -19,12 +20,12 @@ Shortlist of improvements and ideas to guide next iterations.
 - Clean, production ready outputs
   - Publication quality by default: high DPI, exact canvas size, no clipping
   - Consistent spacing, legible labels, subtle legend styling
-  - SVG output option
+  - SVG and PDF output that match the PNG look
 
 - Predictable and reproducible
   - Deterministic classifications and colors when breaks are specified
   - Versioned defaults so outputs remain stable across upgrades
-  - Visual regression baselines catch layout regressions
+  - Visual regression baselines that pass on CI (Linux) as well as locally
 
 - Accessible and readable
   - Provide color-vision-safe palette options and readable tick labels
@@ -36,6 +37,13 @@ Shortlist of improvements and ideas to guide next iterations.
 
 - Composable design
   - Separate modules for projection, legend and layout so advanced users can swap parts later
+
+## How we prioritize
+
+1. Ship examples people would publish (newsroom, research, agency)
+2. Add only the API those examples force (insets, SVG, etc.)
+3. Document and polish once the maps prove the look
+4. Defer nice-to-haves until an example hits them
 
 ## v0.1.0 completed (2025-11-16)
 
@@ -51,56 +59,65 @@ Shortlist of improvements and ideas to guide next iterations.
 - matplotlib 3.9+ colormap API, CI workflow
 - Overlays, left-aligned legend, No-data swatch, log + nice-round breaks,
   compact/`%` labels; Census of Agriculture examples
+- Bundled Barlow as the default theme font
 
-## v0.3.0 - Documentation and examples
+## v0.3.0 - Real maps, features they force
 
-### ReadTheDocs site
-- Gallery of examples with real-world data
-- Python API tutorials for common use cases
-- CLI workflows with sample data
-- ColorBrewer guide: visual palette selector and usage notes
-- Cartographic guidelines and accessibility tips
+Goal: more publishable examples, and only the product features those maps need.
+Docs stay thin (README gallery); a full docs site waits for 0.4.
 
 ### Example gallery
-- US demographic mapping at state and county level
-- International examples (world, European regions)
-- Before/after comparisons vs plain matplotlib
+- National US map that includes Alaska and Hawaii (not CONUS-only)
+- One metro or regional map beyond LA County
+- One non-US example if suitable data is handy
+- README becomes a short visual gallery of the best outputs
 
-## v0.4.0 - Advanced features
+### Features pulled by those examples
+- US Alaska/Hawaii insets for national maps
+- SVG and clean PDF output (exact canvas, no tight-bbox surprises)
+- Quality fixes only when an example hits them (legend spacing, overlay edge cases, etc.)
 
-### Enhanced classification
-- Additional classifiers: JenksCaspall, MaximumBreaks, StdMean
-- Smart defaults: Jenks for skewed data, quantiles otherwise
-- Palette guardrails: coerce `k` to available palette break counts
+### CI reliability
+- Visual baselines that match Linux CI (regenerate on Ubuntu or raise tolerance)
+- Keep unit tests green; image tests trustworthy on every push
 
-### Projection enhancements
-- More named projections: Alaska, Hawaii, Europe, world regions
-- Auto-detection for world vs regional extents
-- US inset support: Alaska/Hawaii small multiples for national maps
+### Out of scope for 0.3
+- Full ReadTheDocs site
+- World projection catalog
+- Layout presets (`news` / `technical`)
+- Extra classifiers beyond what examples need
 
-### Advanced legend controls
-- Fine-grained spacing knobs on `LegendSpec`
-- Ultra-subtle styling: minimal ticks, no outlines
-- Unit annotations on legend ramps
+## v0.4.0 - Convince and scale
 
-## v0.5.0 - Polish and performance
+Goal: make the package discoverable and easier for people who did not write it.
+
+### Docs site
+- Gallery-driven docs with the 0.3 maps as the spine
+- ColorBrewer guide and CLI walkthroughs
+- Short tutorials for common jobs (county choropleth, national with insets, custom breaks)
+
+### Smarter defaults
+- Auto-pick Jenks vs quantiles for skewed data
+- Palette `k` guardrails (coerce to available ColorBrewer class counts)
+
+### Projections and regions
+- Named helpers as examples need them (Europe, world, etc.)
+- Better auto-detection for world vs regional extents
 
 ### Layout presets
-- Built-in presets: `layout_preset="news"|"technical"|"academic"`
-- Adaptive spacing based on content presence
+- `news` / `technical` / `academic` distilled from patterns in the example gallery
 
-### Performance and quality
-- Faster rendering for large datasets
-- Better error messages and validation
-- Complete type annotations and docstrings
+## Later
 
-## Future considerations
-
-### Advanced cartography
-- Multi-layer support
+### Cartography
+- Multi-layer fills (not just boundary overlays)
 - Annotation system: labels, callouts, north arrows
 - Interactive output with web mapping libraries
 
-### Data integration
-- Built-in data sources (Census API, World Bank)
-- Data validation and quality checks
+### Data
+- Optional helpers for common sources (Census, etc.)
+- Light data-validation checks before plot
+
+### Performance
+- Faster rendering for large GeoDataFrames
+- Better error messages and full type annotations

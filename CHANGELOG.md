@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned for v0.3.0 - Documentation
-- ReadTheDocs site with comprehensive examples
-- Gallery of real-world use cases
-- ColorBrewer palette guide
-- CLI workflow tutorials
+### Planned for v0.3.0 - Real maps, features they force
+- Publishable example gallery (national US with AK/HI, metro, optional non-US)
+- US Alaska/Hawaii insets
+- SVG and clean PDF output
+- Linux-stable visual baselines for CI
+- README visual gallery (full docs site waits for 0.4)
+
+### Planned for v0.4.0 - Convince and scale
+- Gallery-driven docs site, ColorBrewer guide, CLI tutorials
+- Smarter classification defaults and palette `k` guardrails
+- More named projections as examples need them
+- Layout presets distilled from the example gallery
 
 ---
 
