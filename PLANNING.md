@@ -78,8 +78,9 @@ Docs stay thin (README gallery); a full docs site waits for 0.4.
 - Quality fixes only when an example hits them (legend spacing, overlay edge cases, etc.)
 
 ### CI reliability
-- Visual baselines that match Linux CI (regenerate on Ubuntu or raise tolerance)
-- Keep unit tests green; image tests trustworthy on every push
+- Visual baselines regenerated on Ubuntu (see `.github/workflows/update-mpl-baselines.yml`)
+- Unit tests on Python 3.10 and 3.12; image tests on 3.12 only
+- Image RMS tolerance allows macOS/Linux FreeType differences until baselines are Linux-native
 
 ### Out of scope for 0.3
 - Full ReadTheDocs site

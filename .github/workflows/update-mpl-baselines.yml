@@ -1,0 +1,30 @@
+name: update mpl baselines
+
+# Regenerates tests/baseline on ubuntu-latest (the CI OS) and uploads them
+# as an artifact. Download the zip, replace tests/baseline/, then commit.
+#
+#   gh workflow run "update mpl baselines"
+#   gh run watch
+#   gh run download <id> -n mpl-baselines -D /tmp/mpl-baselines
+
+on:
+  workflow_dispatch:
+
+jobs:
+  baselines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Generate baselines
+        run: pytest tests/test_visual.py --mpl-generate-path=tests/baseline -q --tb=line
+      - name: Verify baselines
+        run: pytest tests/test_visual.py -q --tb=short
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpl-baselines
+          path: tests/baseline/

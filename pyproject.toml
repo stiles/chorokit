@@ -33,4 +33,5 @@ ckit = "chorokit.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# --mpl only needed for image tests; unit tests ignore it
 addopts = "--mpl --mpl-baseline-path=tests/baseline"
