@@ -2,8 +2,6 @@
 
 A Python helper that creates clean choropleth maps with defaults for projection, layout, legend and other key configurations.
 
-*This project is in the early stages of development. Contributions and feedback welcome.*
-
 ## Core principles
 
 - **Easy to use:** the common case works with one function call or CLI command
