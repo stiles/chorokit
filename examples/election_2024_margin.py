@@ -22,7 +22,7 @@ from chorokit.style import Theme
 
 from _common import ELECTIONS_REPO, OUT, RAW, conus, state_geometries
 
-SOURCE = "Source: MIT Election Data + Science Lab; Dave Leip's Atlas (2024)"
+SOURCE = "Sources: MIT Election Data + Science Lab; Dave Leip's Atlas of U.S. Presidential Elections"
 THEME = Theme(title_fontsize=17)
 
 # Signed margin (rep − dem) for classification. Legend shows absolute margins
@@ -91,14 +91,14 @@ def main() -> None:
         breaks=MARGIN_BREAKS,
         labels=MARGIN_LABELS,
         label_style="boundary",
-        title="Margin in percentage points (blue = Dem, red = Rep)",
+        title="Democratic share   |   Republican share",
         align="left",
         location="top",
         show_missing=True,
     )
     layout = LayoutConfig(
-        title="2024 presidential vote margin, by county",
-        subtitle="Republican share versus Democratic share",
+        title="Presidential vote margin by county in 2024",
+        subtitle="Percentage share of the vote by party in contiguous United States",
         source=SOURCE,
         width=11.0,
         theme=THEME,
