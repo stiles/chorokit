@@ -2,7 +2,8 @@
 
 Reads the pre-built GeoJSON from the presidential-elections repo when present,
 otherwise looks for a cached copy under examples/data/raw/. Draws a CONUS
-choropleth with a diverging red–blue scale (Republican margin positive).
+choropleth with a diverging scale: blue for Democratic margins, red for
+Republican (no shared near-white bin across zero).
 
 Usage:
     python examples/election_2024_margin.py
@@ -11,7 +12,9 @@ Usage:
 from __future__ import annotations
 
 import geopandas as gpd
+import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 from chorokit import Overlay, LayoutConfig, LegendConfig, plot_choropleth
 from chorokit.projection import Projection
@@ -22,9 +25,38 @@ from _common import ELECTIONS_REPO, OUT, RAW, conus, state_geometries
 SOURCE = "Source: MIT Election Data + Science Lab; Dave Leip's Atlas (2024)"
 THEME = Theme(title_fontsize=17)
 
-# Signed margin (rep − dem), percentage points. Symmetric breaks around zero.
-MARGIN_BREAKS = [-40, -20, -10, -5, 5, 10, 20, 40]
-MARGIN_LABELS = ["−40", "−20", "−10", "−5", "5", "10", "20", "40"]
+# Signed margin (rep − dem) for classification. Legend shows absolute margins
+# so Dem (blue, left of 0) and Rep (red, right of 0) both read as positive.
+MARGIN_BREAKS = [-40, -30, -20, -10, -5, 0, 5, 10, 20, 30, 40]
+MARGIN_LABELS = ["40", "30", "20", "10", "5", "0", "5", "10", "20", "30", "40"]
+
+# ColorBrewer RdBu ends, skipping the near-white center so close races still read
+# as blue (Dem) or red (Rep). Order: strong Dem → weak Dem → weak Rep → strong Rep.
+MARGIN_COLORS = [
+    "#08519c",
+    "#3182bd",
+    "#6baed6",
+    "#bdd7e7",
+    "#eff3ff",  # weak Dem — still clearly blue
+    "#fee5d9",  # weak Rep — still clearly red
+    "#fcae91",
+    "#fb6a4a",
+    "#de2d26",
+    "#a50f15",
+]
+CMAP_NAME = "chorokit_election_margin"
+
+
+def _register_margin_cmap() -> str:
+    cmap = ListedColormap(MARGIN_COLORS, name=CMAP_NAME)
+    try:
+        matplotlib.colormaps.register(cmap, name=CMAP_NAME, force=True)
+    except TypeError:
+        # older matplotlib: no force= kwarg
+        if CMAP_NAME in matplotlib.colormaps:
+            return CMAP_NAME
+        matplotlib.colormaps.register(cmap, name=CMAP_NAME)
+    return CMAP_NAME
 
 
 def load_election_2024() -> gpd.GeoDataFrame:
@@ -51,21 +83,22 @@ def main() -> None:
 
     geo = conus(gdf)
     states = conus(state_geometries())
-    overlay = Overlay(gdf=states, edgecolor="#666666", linewidth=0.4)
+    overlay = Overlay(gdf=states, edgecolor="#ffffff", linewidth=0.4)
+    cmap = _register_margin_cmap()
 
     legend = LegendConfig(
         kind="binned",
         breaks=MARGIN_BREAKS,
         labels=MARGIN_LABELS,
         label_style="boundary",
-        title="Margin in percentage points (Dem negative, Rep positive)",
+        title="Margin in percentage points (blue = Dem, red = Rep)",
         align="left",
         location="top",
         show_missing=True,
     )
     layout = LayoutConfig(
-        title="2024 presidential vote margin by county",
-        subtitle="Republican share minus Democratic share",
+        title="2024 presidential vote margin, by county",
+        subtitle="Republican share versus Democratic share",
         source=SOURCE,
         width=11.0,
         theme=THEME,
@@ -77,7 +110,7 @@ def main() -> None:
     fig, _ = plot_choropleth(
         geo,
         value="margin",
-        cmap="RdBu_r",
+        cmap=cmap,
         edgecolor="#ffffff",
         linewidth=0.12,
         legend=legend,

@@ -265,5 +265,9 @@ def discrete_cmap(base: Union[str, Colormap], n: int) -> ListedColormap:
     else:
         base_cmap = base
 
+    # Keep an already-discrete palette when class count matches.
+    if isinstance(base_cmap, ListedColormap) and base_cmap.N == n:
+        return base_cmap
+
     colors = base_cmap(np.linspace(0.1, 0.9, n))
     return ListedColormap(colors)
