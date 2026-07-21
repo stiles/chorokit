@@ -85,9 +85,20 @@ def test_round_breaks_snaps_interior_edges():
     rounded = compute_breaks(s, scheme="natural", k=5, round_breaks=True)
     assert rounded[0] == pytest.approx(raw[0])
     assert rounded[-1] == pytest.approx(raw[-1])
-    # interior edges should be on the nice-number lattice
-    for b in rounded[1:-1]:
-        assert nice_round(b) == pytest.approx(b)
+    assert all(a < b for a, b in zip(rounded, rounded[1:]))
+
+
+def test_round_breaks_preserves_classes_on_tight_percent_range():
+    # Gen Z–like shares: most values between ~18–27%. Naive nice-rounding
+    # used to collapse five Jenks classes into three (20% / 25% only).
+    rng = np.random.default_rng(0)
+    s = pd.Series(rng.normal(loc=21.5, scale=2.8, size=800).clip(10, 37))
+    raw = compute_breaks(s, scheme="natural", k=5, round_breaks=False)
+    rounded = compute_breaks(s, scheme="natural", k=5, round_breaks=True)
+    assert len(raw) == 6
+    # keep at least 4 classes (5 boundaries) after snapping
+    assert len(rounded) >= 5
+    assert all(a < b for a, b in zip(rounded, rounded[1:]))
 
 
 def test_log_breaks_spread_across_orders_of_magnitude():

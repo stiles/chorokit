@@ -13,7 +13,7 @@ from .palettes import create_colorbrewer_cmap
 
 # Snap Jenks/quantile edges to mantissa * 10^n so legends read cleanly
 # (37,412 → 40,000; 13,542 → 15,000).
-NICE_MANTISSAS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5]
+NICE_MANTISSAS = [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5]
 
 
 def nice_round(value: float) -> float:
@@ -21,8 +21,68 @@ def nice_round(value: float) -> float:
     if value <= 0:
         return 0.0
     exp = math.floor(math.log10(value))
-    candidates = [m * 10**e for e in (exp, exp + 1) for m in NICE_MANTISSAS]
+    # keep a coarse lattice for standalone snapping (head counts, income, etc.)
+    coarse = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5]
+    candidates = [m * 10**e for e in (exp, exp + 1) for m in coarse]
     return min(candidates, key=lambda c: abs(math.log10(c / value)))
+
+
+def _nice_candidates(value: float) -> List[float]:
+    """Candidate round numbers near ``value`` (for neighbor-aware snapping)."""
+    if value <= 0:
+        return [0.0]
+    exp = math.floor(math.log10(abs(value)))
+    out: List[float] = []
+    for e in (exp - 1, exp, exp + 1):
+        for m in NICE_MANTISSAS:
+            out.append(m * 10**e)
+    return out
+
+
+def _snap_between(value: float, lo: float, hi: float) -> Optional[float]:
+    """Snap ``value`` to a nice number strictly inside ``(lo, hi)``.
+
+    Falls back to integer / half-unit steps when the window is narrow so
+    percentage-like series (e.g. 18–27%) do not collapse to two bins.
+    """
+    if not (lo < hi):
+        return None
+    cands = [c for c in _nice_candidates(value) if lo < c < hi]
+    gap = hi - lo
+    if gap <= 100:
+        step = 1.0 if gap > 5 else 0.5
+        x = math.floor(lo / step) * step + step
+        while x < hi - 1e-12:
+            cands.append(x)
+            x += step
+    if not cands:
+        return None
+
+    def _dist(c: float) -> float:
+        if value > 0 and c > 0:
+            return abs(math.log10(c / value))
+        return abs(c - value)
+
+    return min(cands, key=_dist)
+
+
+def _round_interior_breaks(bounds: List[float]) -> List[float]:
+    """Snap interior edges without dropping classes when the span is tight."""
+    if len(bounds) <= 2:
+        return list(bounds)
+    rounded: List[float] = [bounds[0]]
+    for i in range(1, len(bounds) - 1):
+        lo = rounded[-1]
+        hi = bounds[i + 1]
+        snapped = _snap_between(bounds[i], lo, hi)
+        if snapped is None:
+            continue
+        rounded.append(snapped)
+    if bounds[-1] > rounded[-1]:
+        rounded.append(bounds[-1])
+    elif len(rounded) == 1:
+        rounded.append(bounds[-1])
+    return rounded
 
 
 def compute_breaks(
@@ -42,7 +102,9 @@ def compute_breaks(
     When ``log`` is True, classification runs on log10 of positive values and
     edges are transformed back — useful for head counts that span orders of
     magnitude. When ``round_breaks`` is True, interior edges are snapped to
-    round numbers via :func:`nice_round` (min/max are preserved).
+    round numbers via :func:`nice_round` (min/max are preserved). Snapping is
+    neighbor-aware so a tight percentage range does not collapse five classes
+    into two or three.
     """
     s = values.dropna().astype(float)
     if s.empty:
@@ -93,16 +155,7 @@ def compute_breaks(
         return [lower, upper]
 
     if round_breaks and len(deduped) > 2:
-        rounded: List[float] = [deduped[0]]
-        for b in deduped[1:-1]:
-            r = nice_round(b)
-            if r > rounded[-1]:
-                rounded.append(r)
-        if deduped[-1] > rounded[-1]:
-            rounded.append(deduped[-1])
-        elif len(rounded) == 1:
-            rounded.append(deduped[-1])
-        deduped = rounded
+        deduped = _round_interior_breaks(deduped)
 
     return deduped
 

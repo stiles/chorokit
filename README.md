@@ -163,6 +163,31 @@ breaks, compact/`%` legend labels, a left-aligned legend and a No-data swatch.
 
 ![Farmland share](examples/visuals/ag_farmland_share.png)
 
+### 2024 election margin
+
+```bash
+python examples/election_2024_margin.py
+```
+
+Uses the county GeoJSON from the sibling `presidential-elections` repo (or a
+cached copy under `examples/data/raw/`). Diverging `RdBu_r` scale with fixed
+symmetric breaks around zero.
+
+![2024 presidential margin](examples/visuals/election_2024_margin.png)
+
+### County demographics
+
+```bash
+python examples/county_demographics.py
+python examples/county_demographics.py --only gen_z_share
+```
+
+Caches Esri updated-demographics counties from
+`https://stilesdata.com/gis/usa_counties_demos_generations.geojson` and draws
+Gen Z share, median household income and population density.
+
+![Gen Z share](examples/visuals/demos_gen_z_share.png)
+
 ## Features
 
 - **Layout**: figure height comes from the map aspect plus fixed-size title, legend and source bands, so spacing is identical for wide, tall or square geographies
